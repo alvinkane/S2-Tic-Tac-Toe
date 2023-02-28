@@ -21,6 +21,7 @@ const model = {
   clickingThrottle: false,
 };
 const view = {
+  // 畫OX
   draw(shape, position) {
     // 判斷是否為OX
     if (shape !== "circle" && shape !== "cross") {
@@ -31,6 +32,18 @@ const view = {
       `#app table tr td[data-index='${position}']`
     );
     cellDrawed.innerHTML = `<div class=${shape}></div>`;
+  },
+  // 顯示winner
+  showWinner() {
+    const gameEnd = document.querySelector("#game-end");
+    gameEnd.classList.add("end");
+    gameEnd.innerHTML = `<p>${model.currentPlayer} win</p>`;
+  },
+  // 顯示平手
+  showTied() {
+    const gameEnd = document.querySelector("#game-end");
+    gameEnd.classList.add("end");
+    gameEnd.innerHTML = `<p>Tied~</p>`;
   },
 };
 const controller = {
@@ -84,12 +97,14 @@ const controller = {
     if (this.isPlayerWin(player, positions)) {
       model.gameoverFlag = true;
       this.removeClickListeners();
-      window.alert(`${player} win`);
+      view.showWinner();
+      // window.alert(`${player} win`);
     }
     // 判斷是否已經被占滿了
     if (this.getEmptyPositions().length === 0) {
       model.gameoverFlag = true;
-      window.alert("Tied");
+      view.showTied();
+      // window.alert("Tied");
     }
     model.clickingThrottle = false;
   },
@@ -144,7 +159,6 @@ const controller = {
       // 將空的位置加入判斷X是否會贏，如果會贏就回傳該位置
       copiedPositions.cross.push(temposition);
       if (this.isPlayerWin(model.currentPlayer, copiedPositions)) {
-        console.log(temposition);
         return temposition;
       }
       // 用此迴圈順便判斷下一個條件，不然又要迴圈一次，僅記錄，迴圈沒結束再回傳
