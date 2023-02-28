@@ -15,9 +15,17 @@ const model = {
   column(number) {
     return [number, number + 3, number + 6];
   },
+  // 結束
+  gameoverFlag: false,
+  // 結束後不能再按了
+  clickingThrottle: false,
 };
 const view = {
   draw(shape, position) {
+    // 判斷是否為OX
+    if (shape !== "circle" && shape !== "cross") {
+      throw new Error("Unknown drawing shape, must be one of: circle, cross");
+    }
     // 呼叫該位置
     const cellDrawed = document.querySelector(
       `#app table tr td[data-index='${position}']`
@@ -26,11 +34,14 @@ const view = {
   },
 };
 const controller = {
-  // 井字遊戲判斷
+  // 因最後要removeEventListener需要有一致的函式名稱
   onClicked(event) {
     controller.onCellClicked(event);
   },
+  // 井字遊戲判斷
   onCellClicked(event) {
+    // 結束後不能再按了
+    if (model.clickingThrottle) return;
     // 取得點選的位置 position
     const position = Number(event.target.dataset.index);
     // 判斷是否已經被畫過了及是否點在井字內
@@ -39,6 +50,7 @@ const controller = {
     this.recordPositions(model.currentPlayer, position);
     // 畫圓或叉
     view.draw(model.currentPlayer, position);
+    model.clickingThrottle = true;
     // 因為draw顯示得較慢，所以alert需緩一點執行
     // 判斷是否有勝利者或平手
     setTimeout(() => {
@@ -60,18 +72,22 @@ const controller = {
     // 把所有位置合成一個陣列
     const positions = model.positions.circle.concat(model.positions.cross);
     return positions.some((cell) => cell === position);
+    // 也可用return positions["circle"].concat(positions["cross"]).includes(position);
   },
   // 判斷是否有勝利者或平手
   checkWinningCondition(player, positions) {
     // 判斷是否成一條線
     if (this.isPlayerWin(player, positions)) {
+      model.gameoverFlag = true;
       this.removeClickListeners();
       window.alert(`${player} win`);
     }
     // 判斷是否已經被占滿了
     if (this.getEmptyPositions().length === 0) {
+      model.gameoverFlag = true;
       window.alert("Tied");
     }
+    model.clickingThrottle = false;
   },
   // 判斷是否成一條線
   isPlayerWin(player, positions) {
@@ -81,6 +97,8 @@ const controller = {
         return true;
       }
     }
+    // 沒有勝利
+    return null;
   },
   // 找空位
   getEmptyPositions() {
@@ -122,11 +140,6 @@ const checkingLines = [
 ];
 
 //對每一個位置設置監聽器
-// document.querySelectorAll("#app table tr td").forEach((cell) => {
-//   cell.addEventListener("click", function onClicked(event) {
-//     controller.onCellClicked(event);
-//   });
-// });
 document.querySelectorAll("#app table tr td").forEach((cell) => {
   cell.addEventListener("click", controller.onClicked);
 });
