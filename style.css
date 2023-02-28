@@ -38,7 +38,7 @@ body {
 }
 
 #app table tr td .circle::after {
-  content: "Ｏ";
+  content: "O";
   color: rgba(121, 247, 207, 0.6);
 }
 
