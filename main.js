@@ -4,6 +4,8 @@ const model = {
     circle: [],
     cross: [],
   },
+  // 當前玩家
+  currentPlayer: "circle",
   // 勝利條件
   // 橫線(123,456,789)
   row(number) {
@@ -24,28 +26,28 @@ const view = {
   },
 };
 const controller = {
-  // 當前玩家
-  currentPlayer: "circle",
   // 井字遊戲判斷
+  onClicked(event) {
+    controller.onCellClicked(event);
+  },
   onCellClicked(event) {
     // 取得點選的位置 position
     const position = Number(event.target.dataset.index);
     // 判斷是否已經被畫過了及是否點在井字內
     if (!position || this.isPositionOccupied(position)) return;
     // 記錄點選位置
-    this.recordPositions(this.currentPlayer, position);
+    this.recordPositions(model.currentPlayer, position);
     // 畫圓或叉
-    view.draw(this.currentPlayer, position);
+    view.draw(model.currentPlayer, position);
     // 因為draw顯示得較慢，所以alert需緩一點執行
     // 判斷是否有勝利者或平手
     setTimeout(() => {
-      this.checkWinningCondition(this.currentPlayer, model.positions);
+      this.checkWinningCondition(model.currentPlayer, model.positions);
+      this.changePlayer();
     }, 100);
   },
   // 記錄點選位置
   recordPositions(Player, position) {
-    // 判斷代入的currentPlayer為circle或cross
-    if (Player !== ("circle" || "cross")) return;
     // 記錄position
     if (Player === "circle") {
       model.positions.circle.push(position);
@@ -63,6 +65,7 @@ const controller = {
   checkWinningCondition(player, positions) {
     // 判斷是否成一條線
     if (this.isPlayerWin(player, positions)) {
+      this.removeClickListeners();
       window.alert(`${player} win`);
     }
     // 判斷是否已經被占滿了
@@ -86,6 +89,23 @@ const controller = {
     // 用isPositionOccupied判斷是否有空位
     return arr.filter((position) => !this.isPositionOccupied(position));
   },
+  changePlayer() {
+    if (model.currentPlayer === "circle") {
+      model.currentPlayer = "cross";
+    } else {
+      model.currentPlayer = "circle";
+    }
+    // currentPlayer = currentPlayer === "circle" ? "cross" : "circle";
+  },
+  // 結束後移除
+  removeClickListeners() {
+    // document.querySelectorAll("#app table tr td").forEach((cell) => {
+    //   cell.removeEventListener("click", this.onCellClicked);
+    // });
+    document.querySelectorAll("#app table tr td").forEach((cell) => {
+      cell.removeEventListener("click", this.onClicked);
+    });
+  },
 };
 
 //加入勝利條件
@@ -102,8 +122,11 @@ const checkingLines = [
 ];
 
 //對每一個位置設置監聽器
+// document.querySelectorAll("#app table tr td").forEach((cell) => {
+//   cell.addEventListener("click", function onClicked(event) {
+//     controller.onCellClicked(event);
+//   });
+// });
 document.querySelectorAll("#app table tr td").forEach((cell) => {
-  cell.addEventListener("click", (event) => {
-    controller.onCellClicked(event);
-  });
+  cell.addEventListener("click", controller.onClicked);
 });
