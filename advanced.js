@@ -56,6 +56,10 @@ const controller = {
     setTimeout(() => {
       this.checkWinningCondition(model.currentPlayer, model.positions);
       this.changePlayer();
+      // 如果currentplayer是cross且尚未結束即換電腦下
+      if (model.currentPlayer === "cross" && !model.gameoverFlag) {
+        this.computerMove();
+      }
     }, 100);
   },
   // 記錄點選位置
@@ -123,6 +127,58 @@ const controller = {
     document.querySelectorAll("#app table tr td").forEach((cell) => {
       cell.removeEventListener("click", this.onClicked);
     });
+  },
+  // 給電腦找最有價值位置
+  getMostValuablePosition() {
+    // 取得目前還可以下的位置
+    const emptyPositions = this.getEmptyPositions();
+    // 防禦位置
+    const defendPositions = [];
+    // 分批將空的位置加入判斷X是否會贏，如果會贏就回傳該位置
+    for (const temposition of emptyPositions) {
+      // 因為要將空的位置放入positions，但不能影響原本的，所以需要另外設變數儲存，並用Array.from
+      const copiedPositions = {
+        circle: Array.from(model.positions.circle),
+        cross: Array.from(model.positions.cross),
+      };
+      // 將空的位置加入判斷X是否會贏，如果會贏就回傳該位置
+      copiedPositions.cross.push(temposition);
+      if (this.isPlayerWin(model.currentPlayer, copiedPositions)) {
+        console.log(temposition);
+        return temposition;
+      }
+      // 用此迴圈順便判斷下一個條件，不然又要迴圈一次，僅記錄，迴圈沒結束再回傳
+      copiedPositions.circle.push(temposition);
+      if (this.isPlayerWin("circle", copiedPositions)) {
+        defendPositions.push(temposition);
+      }
+    }
+    // 如果都沒有的話，就判斷哪一個位置使用者(o)會贏，如果有的話就回傳該位置
+    if (defendPositions.length !== 0) {
+      return defendPositions[0];
+    }
+    // 如果還是沒有的話，如果有中間位置就下
+    if (emptyPositions.some((index) => index === 5)) {
+      return 5;
+    }
+    // 如果什麼都沒有，就隨機下一個位置
+    return emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
+  },
+  // 電腦下
+  computerMove() {
+    // 找最有利的位置
+    const mostValuablePosition = this.getMostValuablePosition();
+    // 下在取得最有利的位置
+    view.draw(model.currentPlayer, mostValuablePosition);
+    // 記錄下的位置
+    this.recordPositions(model.currentPlayer, mostValuablePosition);
+    model.clickingThrottle = true;
+    setTimeout(() => {
+      // 確認是否贏了
+      this.checkWinningCondition(model.currentPlayer, model.positions);
+      // 沒有就換user下
+      this.changePlayer();
+    }, 100);
   },
 };
 
